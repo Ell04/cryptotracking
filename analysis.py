@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-
-
 import data 
 import requests
 from gdeltdoc import GdeltDoc, Filters, near, repeat, multi_repeat
@@ -9,7 +7,9 @@ import json
 import os
 from tqdm import tqdm
 import utils
+import matplotlib.pyplot as plt
 
+import datetime
 
 '''
 
@@ -19,11 +19,54 @@ import utils
 
 '''
 
+def unix_to_datetime(series):
 
-def anomaly_pattern_detection():
-    pass
+    timestampvalues = [timestamp[0] for timestamp in series]
+    data_df = pd.DataFrame(series.tolist())
+    
+    for time in timestampvalues:
+        timestampseconds = time / 1000
+        datetimevalue = datetime.datetime.fromtimestamp(timestampseconds)
+
+        data_df = data_df.replace(to_replace=time, value=datetimevalue)
 
 
+    print(data_df)
+
+
+def plot(prices, volumes, market_caps):
+    
+    ## -- Prices data --
+    pricevalue = [price[1] for price in prices]
+    y = list(pricevalue)
+    
+    plt.plot(y, color='red', label='Price data for 90 days')
+    plt.title("Raw Price Data")
+    plt.xlabel("Days")
+    plt.ylabel("Price")
+    plt.legend()
+    plt.show()
+
+def anomaly_pattern_detection(datapath):
+
+    ## -- Get the data from the JSON file into a pandas dataframe (90 entries for 90 days) --
+    data_df = pd.read_json(datapath)
+
+    ## -- Ensure correct information --
+    assert data_df.shape[0] == 91, "Dataframe does not contain 90 entries / information for 90 day period! Please check the data.py."
+    assert data_df.shape[1] == 3, "Dataframe missing information for one of or multiple of prices, market caps and total volumes."
+
+    print(data_df)
+
+    ## -- Get the price, volume and market caps data as seperate dataframes --
+    prices = data_df["prices"]
+    volumes = data_df["total_volumes"]
+    market_caps = data_df["market_caps"]
+
+    ## -- Plot some values --
+    plot(prices, volumes, market_caps)
+
+    
 def gdelt_query(filters, storejson=None):
 
     gd = GdeltDoc()
@@ -51,7 +94,7 @@ def getqueryparameters():
     ## -- (2) Pass in bitcoin or ethereum in case --
 
     filters = Filters(
-        keyword="bitcoin",
+        keyword="bitcoin OR ethereum",
         start_date="2023-01-01",
         end_date="2023-12-31",
         country=["UK", "US"]
@@ -71,7 +114,12 @@ def getqueryparameters():
 
 
 if __name__ == "__main__":
-    
-    print("Example run from self entry point")
+
+    datapath = os.path.join(utils.getdirs(), "data/bitcoin_data.json")
+
+    data_series = pd.read_json(datapath)
+
+    unix_to_datetime(data_series['prices'])
+    anomaly_pattern_detection(str(datapath))
     filters = getqueryparameters()
     gdelt_query(filters, storejson=True)

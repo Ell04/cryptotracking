@@ -21,41 +21,60 @@ class cryptodata:
         self.coin = coin
         self.urls = self.get_data_urldict()
 
-        ## -- Get the filename to store the data based on user's local machine directory and validate --
-        self.filename = os.path.join(utils.getdirs(), f"data/{self.coin}_data.json")
+        ## -- Get the filename to store the data based on user's local machine directory and validate --)
         self.validate()
 
         try:
             
             ## -- From https://docs.coingecko.com/v3.0.1/reference/coins-id-market-chart --
-            print(f"Retrieving data for {self.coin}...")
+            print(f"Retrieving data for {self.coin} ethereum and bitcoin...") if self.coin == "both" else print(f"Retrieving data for {self.coin}...")
 
-            ## -- Get URL from the dictionary --
-            url = self.urls[self.coin]
+            if self.coin == "both":
+                
+                ## -- Get URL from the dictionary for both coins --
+                ethurl = self.urls["ethereum"]
+                btcurl = self.urls["bitcoin"]
 
-            ## -- Set headers for the request --
-            headers = {"accept": "application/json"}
+                ## -- Set headers for the requests for both coins --
+                ethereumresponse = requests.get(ethurl, headers={"accept": "application/json"}, timeout=10)
+                bitcoinresponse = requests.get(btcurl, headers={"accept": "application/json"}, timeout=10)
 
-            ## -- Make the API request and get data as JSON --
-            apiresponse = requests.get(url, headers=headers, timeout=10)
-            self.data = apiresponse.json()
+                ## -- Get response --
+                self.ethereumdata = ethereumresponse.json()
+                self.bitcoindata = bitcoinresponse.json()
 
-            ## -- Check for a valid response --
-            if not self.data:
-                raise ValueError("No data found for the specified coin.")
+                ## -- Check for a valid nonempty response --
+                assert self.ethereumdata, "No data found for ethereum."
+                assert self.bitcoindata, "No data found for bitcoin."
+                
+                print(f"Data retrieved successfully for {self.coin} bitcoin and ethereum.")
 
-            print(f"Data retrieved successfully for {self.coin}.")
+                self.storejson(self.ethereumdata, os.path.join(utils.getdirs(), "data/ethereum_data.json")) if storejson else None
+                self.storejson(self.bitcoindata, os.path.join(utils.getdirs(), "data/bitcoin_data.json")) if storejson else None
 
-            ## -- Dump JSON if boolean storejson is true in class --
-            self.storejson(self.data, self.filename) if storejson else None
+            elif self.coin == "bitcoin" or self.coin == "ethereum":
+
+                ## -- Get URL from the dictionary --
+                url = self.urls[self.coin]
+
+                ## -- Set headers for the request --
+                headers = {"accept": "application/json"}
+
+                ## -- Make the API request and get the response as JSON --
+                apiresponse = requests.get(url, headers=headers, timeout=10)
+                self.data = apiresponse.json()
+
+                ## -- Check for a valid nonempty response --
+                assert self.data, f"No data found for {self.coin}."
+                self.storejson(self.data, os.path.join(utils.getdirs(), f"data/{self.coin}_data.json")) if storejson else None
 
         except Exception as e:
-            print(f"Error retrieving data: {e}")
+            print(f"Error retrieving data for {self.coin}: {e}")
 
 
     def validate(self):
-        if self.coin not in ["bitcoin", "ethereum"]:
-            raise ValueError("Invalid coin name. Please choose either 'bitcoin' or 'ethereum'.")
+        if self.coin not in ["bitcoin", "ethereum", "both"]:
+            raise ValueError("Invalid coin name. Please choose either 'bitcoin', 'ethereum' or 'both'.")
         
         print("Data validated successfully!")
 
@@ -82,5 +101,7 @@ class cryptodata:
 
 if __name__ == "__main__":
      
+     os.system("CLS")
+
      print("Example run: ")
-     c = cryptodata("bitcoin")
+     c = cryptodata("both")

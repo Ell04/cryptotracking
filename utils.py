@@ -3,6 +3,10 @@ import os
 import numpy as np
 import pandas as pd
 
+
+from babel.numbers import format_currency
+
+
 def dumpjson(data, filename):
     
     with open(filename, "w") as f:
@@ -11,7 +15,31 @@ def dumpjson(data, filename):
 def getdirs():
 
     return os.getcwd()
-    
+
+
+def printmetrics(maxprice, minprice, stddevprice, varprice, avgprice,
+                 maxvolume, minvolume, stddevvolume, varvolume, avgvolume,
+                 maxmarketcap, minmarketcap, stddevmarketcap, varmarketcap, avgmarketcap):
+
+    ## -- Plot some values and basic metrics --
+    print("-----------------------------\nMaximum price: ", format_currency(maxprice, 'USD', locale='en_US'))
+    print("Minimum price: ", format_currency(minprice, 'USD', locale='en_US'))
+    print("Standard deviation of prices: ", format_currency(stddevprice, 'USD', locale='en_US'))
+    print("Variance of prices: ", format_currency(varprice, 'USD', locale='en_US'))
+    print("Average price: ", format_currency(avgprice, 'USD', locale='en_US'), "\n-----------------------------")
+
+
+    print("Maximum volume: ", format_currency(maxvolume, 'USD', locale='en_US'))
+    print("Minimum volume: ", format_currency(minvolume, 'USD', locale='en_US'))
+    print("Standard deviation of volumes: ", format_currency(stddevvolume, 'USD', locale='en_US'))
+    print("Variance of volumes: ", format_currency(varvolume, 'USD', locale='en_US'))
+    print("Average volume: ", format_currency(avgvolume, 'USD', locale='en_US'), "\n-----------------------------")
+
+    print("Maximum market cap: ", format_currency(maxmarketcap, 'USD', locale='en_US'))
+    print("Minimum market cap: ", format_currency(minmarketcap, 'USD', locale='en_US'))
+    print("Standard deviation of market cap: ", format_currency(stddevmarketcap, 'USD', locale='en_US'))
+    print("Variance of market cap: ", format_currency(varmarketcap, 'USD', locale='en_US'))
+    print("Average market cap: ", format_currency(avgmarketcap, 'USD', locale='en_US'), "\n-----------------------------")
 
 def getdata(datapath):
     

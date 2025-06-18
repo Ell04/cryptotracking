@@ -5,16 +5,14 @@ import json
 import utils
 import os
 
-'''
-
-Prepare the data:
-
-- Retrieve daily price and volume series for Bitcoin and Ethereum (90 days) 
-- CoinGecko API
-
-'''
 
 class cryptodata:
+    """
+    
+    Class to retrieve cryptocurrency data from CoinGecko API for Ethereum and Bitcoin.
+    
+    """
+
     def __init__(self, coin, storejson=True):
 
         ## -- Store coin variable and url dictionary internally --
@@ -73,14 +71,25 @@ class cryptodata:
 
 
     def validate(self):
+        """
+        
+        Ensure the coin name is valid
+        
+        """
+
         if self.coin not in ["bitcoin", "ethereum", "both"]:
             raise ValueError("Invalid coin name. Please choose either 'bitcoin', 'ethereum' or 'both'.")
         
         print("Data validated successfully!")
 
 
-    ## -- Return a dictionary for the urls for price data --
     def get_data_urldict(self):
+        """
+        
+        Return a dictionary mapping coin names to their respective API URLs.
+        The URLs are used to retrieve market chart data for the specified coins.
+        
+        """
 
         urls = {
             "bitcoin": "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=90&interval=daily",
@@ -90,8 +99,12 @@ class cryptodata:
         return urls
     
 
-    ## -- Store the data in dedicated JSON file --
     def storejson(self, data, filename):
+        """
+        
+        Store the data in a dedicated JSON file.
+        
+        """
 
         with open(filename, "w") as f:
             json.dump(data, f, indent=2)

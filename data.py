@@ -7,13 +7,18 @@ import os
 
 
 class cryptodata:
-    """
-    
-    Class to retrieve cryptocurrency data from CoinGecko API for Ethereum and Bitcoin.
-    
-    """
-
     def __init__(self, coin, storejson=True):
+
+        """
+        Initialize the cryptodata class.
+        
+        
+        Args:
+            coin (str): The name of the cryptocurrency to retrieve data for. Options are "bitcoin", "ethereum", or "both".
+            storejson (bool): Whether to store the retrieved data in JSON files. Default is True.
+
+
+        """
 
         ## -- Store coin variable and url dictionary internally --
         self.coin = coin
@@ -67,7 +72,7 @@ class cryptodata:
                 self.storejson(self.data, os.path.join(utils.getdirs(), f"data/{self.coin}_data.json")) if storejson else None
 
         except Exception as e:
-            print(f"Error retrieving data for {self.coin}: {e}")
+            print(f"Error retrieving data for {self.coin}: {e}, check VPN or internet connection.")
 
 
     def validate(self):
@@ -103,6 +108,10 @@ class cryptodata:
         """
         
         Store the data in a dedicated JSON file.
+
+        Args:
+            data (dict): The data to be stored.
+            filename (str): The path where the JSON file will be saved.
         
         """
 
@@ -110,11 +119,3 @@ class cryptodata:
             json.dump(data, f, indent=2)
 
         print(f"Data stored in {filename}")
-
-
-if __name__ == "__main__":
-     
-     os.system("CLS")
-
-     print("Example run: ")
-     c = cryptodata("both")

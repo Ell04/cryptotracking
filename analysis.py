@@ -49,6 +49,7 @@ def plotrawdata(prices, volumes, market_caps):
     
     ## -- Prices data --
     pricevalue = [price[1] for price in prices]
+    plt.figure()
     y = list(pricevalue)
     
     plt.plot(y, color='red', label='Price data for 90 days')
@@ -56,10 +57,11 @@ def plotrawdata(prices, volumes, market_caps):
     plt.xlabel("Days")
     plt.ylabel("Price")
     plt.legend()
-    plt.show()
+    plt.savefig("plots/raw_price_data.png")
 
     ## -- Volume data --
     volumevalue = [volume[1] for volume in volumes]
+    plt.figure()
     y = list(volumevalue)
     
     plt.plot(y, color='red', label='Volume data for 90 days')
@@ -67,10 +69,11 @@ def plotrawdata(prices, volumes, market_caps):
     plt.xlabel("Days")
     plt.ylabel("Volume")
     plt.legend()
-    plt.show()
+    plt.savefig("plots/raw_volume_data.png")
 
     ## -- Market cap data --
     marketcapvalue = [mcap[1] for mcap in market_caps]
+    plt.figure()
     y = list(marketcapvalue)
     
     plt.plot(y, color='red', label='Market cap data for 90 days')
@@ -78,59 +81,23 @@ def plotrawdata(prices, volumes, market_caps):
     plt.xlabel("Days")
     plt.ylabel("Market Cap")
     plt.legend()
-    plt.show()
+    plt.savefig("plots/raw_market_cap_data.png")
 
-def plotisolationforest(data, anomalies, segment):
+
+def plotdata(data, labels, segment, type=""):
     """
     
-    Plot Isolation Forest anomaly data.
+    Plot the clustered data using seaborn scatterplot (dbscan or isolation forest).
 
     Args:
-        data (np.ndarray): The data to be plotted
-        anomalies (np.ndarray): An array indicating the anomalies, where -1 indicates an anomaly
-        segment (str): The segment of the data being plotted (e.g., "price",
-    
-    """
-
-    sns.set_style(style="whitegrid")
-    sns.set_context("notebook")
-    
-    ## -- Plot the anomalous data --
-    plt.figure(figsize=(10, 6))
-
-    data_df = pd.DataFrame({"Indexes": range(len(data)), 
-                            "Values": data[:, 0],
-                            "Anomalies": anomalies
-                            })
-
-
-    ## -- Get range(len(data)) for x axis (90 days) --
-    ## -- data[:, 0] for y axis (Standardised price, volume, and market caps) --
-
-    sns.scatterplot(data=data_df, x="Indexes", y="Values", 
-                    hue="Anomalies", palette="viridis", s=120,
-                    edgecolor="black", alpha=0.7)
-    
-
-    plt.title(f"Isolation Forest Anomalies for {segment}")
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.xlabel("Days (90 days)")
-    plt.ylabel(f"Scaled Values for {segment}")
-    plt.show()
-
-
-
-def plotclustereddata(data, labels, segment):
-    """
-    
-    Plot DBSCSAN clustered data.
-
-    Args:
-        data (np.ndarray): The data to be plotted
+        data (np.ndarray): The data to be plotted, should be a 2D array
         labels (np.ndarray): An array of cluster labels, where -1 indicates noise
         segment (str): The segment of the data being plotted (e.g., "price", "volume", "market cap")
+        type (str): The type of clustering used (e.g., "dbscan", "isolation_forest"). Default is an empty string.
+        Will be overwritten in the function call.
     
     """
+
 
     sns.set_style(style="whitegrid")
     sns.set_context("notebook")
@@ -150,11 +117,11 @@ def plotclustereddata(data, labels, segment):
                     hue="Clusters", palette="viridis", s=120,
                     edgecolor="black", alpha=0.7)
     
-    plt.title(f"DBSCAN Clustering for {segment}")
+    plt.title(f"{type} for {segment}")
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.xlabel("Days (90 days)")
     plt.ylabel(f"Scaled Values for {segment}")
-    plt.show()
+    plt.savefig(f"plots/{type}_{segment}.png")
 
 
 def compute_isolation_forest(data, segment="", contamination="auto"):
@@ -185,7 +152,7 @@ def compute_isolation_forest(data, segment="", contamination="auto"):
 
     print("Anomalies detected at indicies: ", anomalous_indicies, " using isolation forest\n") if len(anomalous_indicies) > 0 else print("No isolation forest anomalies detected!\n")
     
-    plotisolationforest(datalist, anomalies, segment=segment) if len(anomalous_indicies) > 0 else None
+    plotdata(datalist, anomalies, segment=segment, type="isolation_forest") if len(anomalous_indicies) > 0 else None
     return anomalous_indicies
 
 
@@ -212,7 +179,7 @@ def compute_dbscan(data, min_samples, eps=0.1, segment=""):
     dbscan = DBSCAN(eps=eps, min_samples=min_samples)
     labels = dbscan.fit_predict(valuelist)
 
-    plotclustereddata(valuelist, labels, segment=segment)
+    plotdata(valuelist, labels, segment=segment, type="dbscan")
     return labels, scaler, valuelist
 
 
@@ -285,9 +252,9 @@ def anomaly_pattern_detection(datapath, coin, showplots=True, priceanomalies = [
 
     ## -- Market caps --
 
-    anomalous_indicies_mcaps, _, _, _ = detect_anomalies_from_noise(market_caps, min_samples=3, segment="market cap")
+    anomalous_indicies_mcaps, _, _, _ = detect_anomalies_from_noise(market_caps, min_samples=3, segment="mcaps")
     print("Anomalies in market cap data at index: ", anomalous_indicies_mcaps, "\n") if len(anomalous_indicies_mcaps) > 0 else print("No anomalies in market cap data!\n")
-    i_forest_mcaps = compute_isolation_forest(market_caps, segment="market cap")
+    i_forest_mcaps = compute_isolation_forest(market_caps, segment="mcaps")
 
     if len(anomalous_indicies_prices) > 0:
         anomalytime = [prices[i][0] for i in anomalous_indicies_prices]
@@ -319,17 +286,17 @@ def anomaly_pattern_detection(datapath, coin, showplots=True, priceanomalies = [
     
     ## -- Get the query parameters for each anomaly time --
     print("Getting price anomaly events...\n")
-    getqueryparameters(priceanomalies, coin)
+    success = getqueryparameters(priceanomalies, coin)
     time.sleep(1)
 
 
-    print("Getting volume anomaly events...\n")
-    getqueryparameters(volumeanomalies, coin)
+    print("Getting volume anomaly events...\n") if success else None
+    getqueryparameters(volumeanomalies, coin) if success else None
     time.sleep(1)
 
 
-    print("Getting market cap anomaly events...\n")
-    getqueryparameters(marketcapanomalies, coin)
+    print("Getting market cap anomaly events...\n") if success else None
+    getqueryparameters(marketcapanomalies, coin) if success else None
 
 
     return priceanomalies, volumeanomalies, marketcapanomalies
@@ -382,8 +349,16 @@ def gdelt_query(filter, anomalytime, coin, storejson=None, gd = GdeltDoc()):
     """
 
     ## -- Search for articles and get timeline, articles is returned as a DataFrame --
-    articles = gd.article_search(filter)
-    articles = remove404(articles)
+
+    ## -- Please note that the guardrails are there due to GDELT API not being active as of June 2025.
+
+    try:    
+        articles = gd.article_search(filter)
+        articles = remove404(articles)
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching articles: {e}")
+        return False
+    
 
     timeline = gd.timeline_search(filters=filter, mode="timelinevol")
 
@@ -393,6 +368,8 @@ def gdelt_query(filter, anomalytime, coin, storejson=None, gd = GdeltDoc()):
     ## -- Dump JSON and store timeline to a csv -- 
     utils.dumpjson(articles, os.path.join(utils.getdirs(), f"data/{coin}_events/processed_events_for_{anomalytime}.json")) if storejson else None
     #timeline.to_csv("timeline.csv", index=False)
+
+    return True
 
 
 
@@ -436,20 +413,13 @@ def getqueryparameters(anomalytimearr, coin):
         
         )
         
-        gdelt_query(filter, coin=coin, storejson=True, anomalytime=anomalytimearr[anomaly])
+        success = gdelt_query(filter, coin=coin, storejson=True, anomalytime=anomalytimearr[anomaly])
+        if not success:
+            print("\nStopping GDELT queries due to API failure.\n")
+            return success
 
     print("GDELT query iteration complete!\n")
 
 
 if __name__ == "__main__":
-    os.system("CLS")
-
-    bitcoindatapath = os.path.join(utils.getdirs(), "data/bitcoin_data.json")
-    ethereumdatapath = os.path.join(utils.getdirs(), "data/ethereum_data.json")
-    choice = input("Process anomalies and events for bitcoin or ethereum? (bitcoin/ethereum): ")
-
-    datapath = bitcoindatapath if choice.lower() == "bitcoin" else ethereumdatapath if choice.lower() == "ethereum" else None
-    print("None chosen, exiting...") if datapath is None else None
-
-
-    priceanomalies, volumeanomalies, marketcapanomalies = anomaly_pattern_detection(str(datapath), coin=choice.lower())
+    print("Please run the runner.py script to execute the analysis.")

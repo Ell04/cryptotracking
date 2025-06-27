@@ -4,7 +4,7 @@ Please note that as of June 2025, the GDELT API is currently unavailable and tha
 
 ## Description
 
-Cryptotracking retrieves price, volume and market cap series data for Ethereum and Bitcoin from the CoinGecko API and uses techniques such as DBSCAN and IsolationForests to identify anomalies in the data. The anomalies are plotted and a date range for the anomaly is entered into GDELT to attempt to contextualise the anomaly by returning potentially relevant articles.
+Cryptotracking retrieves price, volume and market cap series data for Ethereum and Bitcoin from the CoinGecko API and uses techniques such as DBSCAN and IsolationForests to identify anomalies in the data. The anomalies are plotted and a date range for the anomaly is entered into GDELT to attempt to contextualise the anomaly by returning potentially relevant articles. The repository also contains some precomputed bitcoin and ethereum data and some precomputed dbscan and isolation forest plots, which can all be overwritten in `runner.py` to suit the current date that the program is ran on.
 
 ## Structure
 

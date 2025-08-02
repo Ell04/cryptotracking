@@ -1,20 +1,32 @@
-# Cryptotracking
+# Cryptotracking 🪙
 
-Please note that as of June 2025, the GDELT API is currently unavailable and that this project is a work in progress.
+Tracking Cryptocurrencies and understanding their price fluctuations.
 
-## Description
+## Overview 📖
 
-Cryptotracking retrieves price, volume and market cap series data for Ethereum and Bitcoin from the CoinGecko API and uses techniques such as DBSCAN and IsolationForests to identify anomalies in the data. The anomalies are plotted and a date range for the anomaly is entered into GDELT to attempt to contextualise the anomaly by returning potentially relevant articles. The repository also contains some precomputed bitcoin and ethereum data and some precomputed dbscan and isolation forest plots, which can all be overwritten in `runner.py` to suit the current date that the program is ran on.
+Cryptotracking retrieves price, volume and market cap series data for Ethereum and Bitcoin from the [`CoinGecko API`](https://www.coingecko.com/en/api) and uses techniques such as [`DBSCAN`](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.DBSCAN.html) and [`IsolationForests`](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html) to identify anomalies in the data. The anomalies are plotted and a date range for the anomaly is entered into [`GDELT`](https://www.gdeltproject.org/) to attempt to contextualise the anomaly by returning potentially relevant articles, and analysis is further enriched by LLMs extracting semantic reasoning behind potential causes.
 
-## Structure
+## Features 📲
 
-- `data.py`: Retrieves data from the CoinGecko API for Ethereum, Bitcoin, or both at once.
-- `analysis.py`: Finds and analyses the anomalies using DBSCAN and isolation forests, and passes data for GDELT queries. Converts Unix timestamps to human readable dates for the GDELT queries. Plots anomaly data using seaborn.
+The repository allows for the gathering of Bitcoin and Ethereum price data, market cap data and volume data for a 90-day period. This data which is processed into [`json files`](data/bitcoin_data.json) is passed to the GDELT API in human readable format to get a date range for articles relating to cryptocurrency. This is then further given to an LLM to validate these sources. Additionally, LLMs may also contextualise the anomaly and find resources for the explaination themselves.
 
-- `utils.py`: Helper functions that are reused. Computes basic stats for the data and dumps JSON.
 
-- `data/`: Contains JSON files for processed GDELT articles (URLs) for anomaly date periods (e.g `data/bitcoin_events`) and coin prices, volumes and market caps (e.g `data/bitcoin_data.json`).
 
-- `plothandler.py`: Creates a local HTML page to display all the plots
+## Structure 🏗️
 
-- `runner.py`: Runner script to execute the code
+- [`data.py`](data.py): Retrieves data from the CoinGecko API for Ethereum, Bitcoin, or both at once.
+- [`analysis.py`](analysis.py): Finds and analyses the anomalies using DBSCAN and isolation forests, and passes data for GDELT queries. Converts Unix timestamps to human readable dates for the GDELT queries. Plots anomaly data using seaborn.
+
+- [`utils.py`](utils.py): Helper functions that are reused. Computes basic stats for the data and dumps JSON.
+
+- [`plothandler.py`](plothandler.py): Creates a local HTML page to display all the plots
+
+- [`runner.py`](runner.py): Runner script to execute the code
+
+## Requirements ✔️
+
+Please find the requirements in [`requirements.txt`](requirements.txt)
+
+## Usage 🔨
+
+...

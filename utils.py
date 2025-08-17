@@ -2,12 +2,44 @@ import json
 import os
 import numpy as np
 import pandas as pd
-
+import yaml
 
 from babel.numbers import format_currency
 
+config_path = os.path.join(os.path.dirname(__file__), "api_config.yml")
+
+def get_key(service, config_file="api_config.yml"):
+    """
+    Get API key
+
+    Args:
+        service (str): The name of the service to get the API key for.
+        config_file (str): The path to the configuration file.
+
+    Returns:
+        str: The API key for the specified service.
+    """
+
+    if not os.path.exists(config_file):
+        config_file = config_path
+
+    ## -- Read the YML file first and get the right entry
+    with open(config_file, "r") as f:
+        config = yaml.safe_load(f)
+    return config[service]["key"]
 
 def dumpjson(data, filename):
+    """
+
+    Simple JSON dump function.
+
+    Args:
+        data (dict): The data to dump.
+        filename (str): The name of the file to dump the data to.
+
+    Returns:
+        None
+    """
     
     with open(filename, "w") as f:
         json.dump(data, f, indent=2)
@@ -20,6 +52,29 @@ def getdirs():
 def printmetrics(maxprice, minprice, stddevprice, varprice, avgprice,
                  maxvolume, minvolume, stddevvolume, varvolume, avgvolume,
                  maxmarketcap, minmarketcap, stddevmarketcap, varmarketcap, avgmarketcap):
+    
+    """
+    
+    Handle cumbersome printing of simple metrics extracted from 90 day cryptocurrency data
+
+    Args:
+        maxprice (float): The maximum price.
+        minprice (float): The minimum price.
+        stddevprice (float): The standard deviation of prices.
+        varprice (float): The variance of prices.
+        avgprice (float): The average price.
+        maxvolume (float): The maximum volume.
+        minvolume (float): The minimum volume.
+        stddevvolume (float): The standard deviation of volumes.
+        varvolume (float): The variance of volumes.
+        avgvolume (float): The average volume.
+        maxmarketcap (float): The maximum market cap.
+        minmarketcap (float): The minimum market cap.
+        stddevmarketcap (float): The standard deviation of market cap.
+        varmarketcap (float): The variance of market cap.
+        avgmarketcap (float): The average market cap.
+
+    """
 
     ## -- Plot some values and basic metrics --
     print("-----------------------------\nMaximum price: ", format_currency(maxprice, 'USD', locale='en_US'))

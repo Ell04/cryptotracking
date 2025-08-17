@@ -203,9 +203,8 @@ def detect_anomalies_from_noise(data, min_samples, segment):
 
 
 
-def anomaly_pattern_detection(datapath, coin, showplots=True, priceanomalies = [], volumeanomalies = [], marketcapanomalies = []):
+def anomaly_pattern_detection(datapath, coin, showplots=True, priceanomalies=[], volumeanomalies=[], marketcapanomalies=[]):
     """
-
     Call the anomaly detection functions to detect anomalies in the data and get the query parameters for each anomaly time.
     The anomalies are detected using DBSCAN clustering and the data is plotted using seaborn.
     getqueryparameters() is called to get the query parameters for each anomaly time (coin and date)
@@ -217,118 +216,112 @@ def anomaly_pattern_detection(datapath, coin, showplots=True, priceanomalies = [
         priceanomalies (list): List to store the anomalies for price data.
         volumeanomalies (list): List to store the anomalies for volume data.
         marketcapanomalies (list): List to store the anomalies for market cap data.
-
     """
 
-
-    ## -- Unpack the data from the JSON file and basic metrics --
-    prices, volumes, market_caps, \
-    maxprice, minprice, stddevprice, varprice, avgprice, \
-    maxvolume, minvolume, stddevvolume, varvolume, avgvolume, \
-    maxmarketcap, minmarketcap, stddevmarketcap, varmarketcap, avgmarketcap = utils.getdata(datapath)
+    # Unpack data and compute metrics
+    data_metrics = utils.getdata(datapath)
+    prices, volumes, market_caps = data_metrics[:3]
+    price_metrics = data_metrics[3:8]
+    volume_metrics = data_metrics[8:13]
+    marketcap_metrics = data_metrics[13:18]
     
-    ## -- Use utils script to print the metrics --
-    utils.printmetrics(maxprice, minprice, stddevprice, varprice, avgprice,
-                        maxvolume, minvolume, stddevvolume, varvolume, avgvolume,
-                        maxmarketcap, minmarketcap, stddevmarketcap, varmarketcap, avgmarketcap)
-
-    ## -- Plot raw data --
-    plotrawdata(prices, volumes, market_caps) if showplots else None
-
-
-
-    ## -- Detect anomalies in the data --
-    ## -- Prices --
-
-    anomalous_indicies_prices, _, _, _ = detect_anomalies_from_noise(prices, min_samples=3, segment="price") 
-    print("Anomalies in price data at index: ", anomalous_indicies_prices, "\n") if len(anomalous_indicies_prices) > 0 else print("No anomalies in price data!\n")
-    i_forest_prices = compute_isolation_forest(prices, segment="price")
-
-    ## -- Volumes --
-
-    anomalous_indicies_volumes, _, _, _ = detect_anomalies_from_noise(volumes, min_samples=3, segment="volume")
-    print("Anomalies in volume data at index: ", anomalous_indicies_volumes, "\n") if len(anomalous_indicies_volumes) > 0 else print("No anomalies in volume data!\n")
-    i_forest_volumes = compute_isolation_forest(volumes, segment="volume")
-
-    ## -- Market caps --
-
-    anomalous_indicies_mcaps, _, _, _ = detect_anomalies_from_noise(market_caps, min_samples=3, segment="mcaps")
-    print("Anomalies in market cap data at index: ", anomalous_indicies_mcaps, "\n") if len(anomalous_indicies_mcaps) > 0 else print("No anomalies in market cap data!\n")
-    i_forest_mcaps = compute_isolation_forest(market_caps, segment="mcaps")
-
-    if len(anomalous_indicies_prices) > 0:
-        anomalytime = [prices[i][0] for i in anomalous_indicies_prices]
-
-        anomalyreadabletime = unix_to_datetime_string(anomalytime)
-        print("Anomalies detected at time: ", anomalyreadabletime, " for price data")
-
-        priceanomalies.extend(anomalyreadabletime)
-
-    if len(anomalous_indicies_volumes) > 0:
-        anomalytime = [volumes[i][0] for i in anomalous_indicies_volumes]
-
-        anomalyreadabletime = unix_to_datetime_string(anomalytime)
-        print("Anomalies detected at time: ", anomalyreadabletime, " for volume data")
-
-        volumeanomalies.extend(anomalyreadabletime)
-
-    if len(anomalous_indicies_mcaps) > 0:
-        anomalytime = [market_caps[i][0] for i in anomalous_indicies_mcaps]
-
-        anomalyreadabletime = unix_to_datetime_string(anomalytime)
-        print("Anomalies detected at time: ", anomalyreadabletime, " for market cap data")
-
-        marketcapanomalies.extend(anomalyreadabletime)
-
-    else:
-        print("No anomalies detected in the data!")
-
+    # Print metrics summary
+    utils.printmetrics(*price_metrics, *volume_metrics, *marketcap_metrics)
     
-    ## -- Get the query parameters for each anomaly time --
-    print("Getting price anomaly events...\n")
-    success = getqueryparameters(priceanomalies, coin)
-    time.sleep(1)
+    # Plot raw data if requested
+    if showplots:
+        plotrawdata(prices, volumes, market_caps)
 
+    # Define data segments for processing
+    data_segments = [
+        ("price", prices, priceanomalies),
+        ("volume", volumes, volumeanomalies),
+        ("mcaps", market_caps, marketcapanomalies)
+    ]
+    
+    print("\n" + "="*50)
+    print("DETECTING ANOMALIES IN CRYPTOCURRENCY DATA")
+    print("="*50)
+    
+    # Process each data segment
+    for segment_name, data, anomaly_list in data_segments:
+        print(f"\n--- Processing {segment_name.upper()} data ---")
+        
+        # DBSCAN anomaly detection
+        anomalous_indices = detect_anomalies_from_noise(data, min_samples=3, segment=segment_name)[0]
+        
+        if len(anomalous_indices) > 0:
+            print(f"✓ DBSCAN anomalies in {segment_name}: {anomalous_indices}")
+            
+            # Convert indices to readable dates
+            anomaly_timestamps = [data[i][0] for i in anomalous_indices]
+            anomaly_dates = unix_to_datetime_string(anomaly_timestamps)
+            print(f"✓ Anomaly dates: {anomaly_dates}")
+            
+            # Add to the respective anomaly list
+            anomaly_list.extend(anomaly_dates)
+        else:
+            print(f"✗ No DBSCAN anomalies detected in {segment_name} data")
+        
+        # Isolation Forest anomaly detection
+        isolation_anomalies = compute_isolation_forest(data, segment=segment_name)
+        
+        print(f"{'='*40}")
 
-    print("Getting volume anomaly events...\n") if success else None
-    getqueryparameters(volumeanomalies, coin) if success else None
-    time.sleep(1)
-
-
-    print("Getting market cap anomaly events...\n") if success else None
-    getqueryparameters(marketcapanomalies, coin) if success else None
-
+    # Query GDELT for news events around anomaly times
+    anomaly_queries = [
+        ("price", priceanomalies),
+        ("volume", volumeanomalies),  
+        ("market cap", marketcapanomalies)
+    ]
+    
+    print(f"\n{'='*50}")
+    print("QUERYING NEWS EVENTS FOR ANOMALY PERIODS")
+    print(f"{'='*50}")
+    
+    for query_type, anomaly_dates in anomaly_queries:
+        if not anomaly_dates:
+            print(f"⚠️  No {query_type} anomalies to query")
+            continue
+            
+        print(f"\n🔍 Getting {query_type} anomaly events...")
+        success = getqueryparameters(anomaly_dates, coin)
+        
+        if not success:
+            print("❌ GDELT API queries failed. Stopping further queries.")
+            break
+            
+        print(f"✅ {query_type.capitalize()} queries completed")
+        time.sleep(1)
 
     return priceanomalies, volumeanomalies, marketcapanomalies
 
 
 def remove404(articles):
     """
-    
     Some articles from GDELT API may return 404 errors. This function checks for 404 errors and removes the articles from the list.
     The function returns a list of valid articles.
-
-    Args:
-        articles (pd.DataFrame): DataFrame containing articles with their URLs.
-    
     """
 
     valid_articles = []
 
     print("\nChecking for 404 errors in articles...\n")
-    assert not articles.empty, "Articles is empty! Please check search filters."
+    
+    # Handle empty articles gracefully
+    if articles.empty:
+        print("No articles returned from GDELT API. Skipping 404 check.")
+        return valid_articles  # Return empty list
 
     for url in tqdm(articles["url"]):
         try:
             response = requests.head(url, allow_redirects=True, timeout=5)
             if response.status_code == 200:
                 valid_articles.append(url)
-
         except requests.RequestException as e:
             print(f"Error checking URL {url}: {e}")
 
     print(f"Removed {len(articles) - len(valid_articles)} articles with 404 errors.\n")
-    return valid_articles 
+    return valid_articles
 
 
 
@@ -358,17 +351,20 @@ def gdelt_query(filter, anomalytime, coin, storejson=None, gd = GdeltDoc()):
     except requests.exceptions.RequestException as e:
         print(f"Error fetching articles: {e}")
         return False
-    
 
     timeline = gd.timeline_search(filters=filter, mode="timelinevol")
 
-    assert len(articles) > 0, "Articles is empty! Please check search filters."
-    assert not timeline.empty, "Timeline is empty! Please check search filters."
+    # Handle empty results gracefully
+    if len(articles) == 0:
+        print(f"No articles found for {anomalytime}. Skipping.")
+        return False
+        
+    if timeline.empty:
+        print(f"No timeline data found for {anomalytime}. Skipping.")
+        return False
 
-    ## -- Dump JSON and store timeline to a csv -- 
+    # Store results if we have data
     utils.dumpjson(articles, os.path.join(utils.getdirs(), f"data/{coin}_events/processed_events_for_{anomalytime}.json")) if storejson else None
-    #timeline.to_csv("timeline.csv", index=False)
-
     return True
 
 
@@ -400,7 +396,7 @@ def getqueryparameters(anomalytimearr, coin):
             keyword=f"{coin}",
             start_date=anomalytimestart,
             end_date=anomalytimestop,
-            num_records=20,
+            num_records=10,
             language="English"
             #domain=["fool.com", "reuters.com", "bbc.co.uk", "cnn.com", "forbes.com", "cnbc.com"],
             #near=near(5, "bitcoin", "war", "trade", "economy", "inflation", "rates", "market", "cryptocurrency", "crypto"), 
